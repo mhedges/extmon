@@ -18,8 +18,8 @@ Slow-Control (SlowCon) system.  It contains:
 
 ** Maintainers
 + @mhedges (Author)
-#+ @username_linked_to_gihub
-#+ @username_linked_to_gihub
+# + @username_linked_to_gihub
+# + @username_linked_to_gihub
 
 # ** Module Flags
 # + =+flag1= A short description of what this flag does and what it might need
