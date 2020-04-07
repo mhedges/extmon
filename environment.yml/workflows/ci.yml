@@ -15,7 +15,7 @@ jobs:
       with:
         auto-update-conda: true
         python-version: 3.8
-        environment: .github/environment.yml
+        environment: environment.yml
         activate-environment: site-build
        
     - name:  Install JupyterBook
