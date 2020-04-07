@@ -1,0 +1,39 @@
+name: CD
+
+on:
+  push:
+    branches: master
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: goanpeca/setup-miniconda@v1
+      with:
+        auto-update-conda: true
+        python-version: 3.8
+        environment: environment.yml
+        activate-environment: site-build
+       
+    - name:  Install JupyterBook
+      run: pip install jupyter-book
+
+    - name: Make book
+      run: jupyter-book create site --content-folder docs
+
+    - name: Build book
+      run: jupyter-book build site
+
+    - name: Deploy
+      if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: site
+        force_orphan: true
+        enable_jekyll: true
+        cname: github.com
