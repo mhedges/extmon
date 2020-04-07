@@ -21,10 +21,10 @@ jobs:
       shell: bash -l {0}
 
     - name: Make book
-      run: jupyter-book-0.3 create site --content-folder docs
+      run: jupyter-book create site --content-folder docs
 
     - name: Build book
-      run: jupyter-book-0.3 build site
+      run: jupyter-book build site
 
     - name: Deploy
       if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
