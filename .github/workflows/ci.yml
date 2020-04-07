@@ -17,11 +17,9 @@ jobs:
 
     - name: Make book
       run: jupyter-book create site --content-folder docs
-      shell: bash -l {0}
 
     - name: Build book
       run: jupyter-book build site
-      shell: bash -l {0}
 
     - name: Deploy
       if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
