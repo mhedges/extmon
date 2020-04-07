@@ -11,13 +11,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: goanpeca/setup-miniconda@v1
-      with:
-        auto-update-conda: true
-        python-version: 3.8
-        environment-file: environment.yml
-        activate-environment: extmon_slowcon
-
     - name:  Install JupyterBook
       run: pip install jupyter-book
       shell: bash -l {0}
