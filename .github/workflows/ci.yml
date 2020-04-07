@@ -20,12 +20,15 @@ jobs:
        
     - name:  Install JupyterBook
       run: pip install jupyter-book
+      shell: bash -l {0}
 
     - name: Make book
       run: jupyter-book create site --content-folder docs
+      shell: bash -l {0}
 
     - name: Build book
       run: jupyter-book build site
+      shell: bash -l {0}
 
     - name: Deploy
       if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
