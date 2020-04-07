@@ -1,0 +1,6 @@
+name: site-build
+channels:
+  - conda-forge
+  - pip
+  - pip:
+      jupyter-notebook
