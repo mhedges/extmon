@@ -39,4 +39,4 @@ jobs:
         publish_dir: site
         force_orphan: true
         enable_jekyll: true
-        cname: github.com
+        cname: github.io
