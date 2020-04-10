@@ -23,7 +23,7 @@ jobs:
       shell: bash -l {0}
 
     - name: Make book
-      run: jupyter-book create site --config docs/_config.yml --content-folder docs --extra files docs/img
+      run: jupyter-book create site --config docs/_config.yml --content-folder docs --extra-files docs/img
       shell: bash -l {0}
 
     - name: Build book
