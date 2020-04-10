@@ -16,9 +16,9 @@
 
 
 - header: "Welcome!"
-- url: /docs/welcome
+- url: /welcome
   title: Welcome to the ExtMon SlowCon
 
 - header: "Extinction Monitor Introduction"
-- url: /docs/intro/intro
+- url: /intro/intro
   title: Basic Introduction to the Extinction Monitor
