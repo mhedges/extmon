@@ -23,7 +23,7 @@ email: hedges7@purdue.edu
 description: >-
   This book covers the slow control archictecture for the Extinction Monitor
   subsystem within Mu2e
-baseurl: /docs            # the subpath of your site, e.g. /blog. If there is no subpath for your site, use an empty string ""
+baseurl:             # the subpath of your site, e.g. /blog. If there is no subpath for your site, use an empty string ""
 url: mhedges.github.io    # the base hostname & protocol for your site, e.g. http://example.com
 
 
