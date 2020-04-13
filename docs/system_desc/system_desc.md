@@ -33,8 +33,8 @@ All physical device and sensor controlls are accessible through standard
 networking protocols. This allows for a simple subnetwork structure with
 all devices connected to a switch, with one machine dedicated as the
 subnetwork gateway (GTWY). A diagram of this configuration is shown in
-Figure [fig:network](fig:network).
+Figure 1.
 
 ![Network configuration for ExtMon device controllers. Solid lines
 denote network connections and dashed lines data transfer
-connections.](./img/network.png "network")
+connections.](../img/network.png "network")
