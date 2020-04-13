@@ -17,11 +17,12 @@
 
 #######################################################################################
 # Jekyll site settings
-title: STM Sandbox
+title: Extinction Monitor Slow-Control
 author: Michael T Hedges
 email: hedges7@purdue.edu
 description: >-
-  This book is meant as a demo for use for the Mu2e STM DAQ and software effort
+  This book covers the slow control archictecture for the Extinction Monitor
+  subsystem within Mu2e
 baseurl:             # the subpath of your site, e.g. /blog. If there is no subpath for your site, use an empty string ""
 url: mhedges.github.io    # the base hostname & protocol for your site, e.g. http://example.com
 
@@ -37,7 +38,7 @@ show_sidebar: true                # Show the sidebar. Only set to false if your 
 collapse_inactive_chapters: true  # Whether to collapse the inactive chapters in the sidebar
 collapse_inactive_sections: true  # Whether to collapse the sub-sections within a non-active section in the sidebar
 textbook_logo: img/mu2e_logo_oval.png                      # A logo to be displayed at the top of your textbook sidebar. Should be square
-textbook_logo_link: https://mhedges.github.io/stm_sandbox  # A link for the logo.
+textbook_logo_link: https://mhedges.github.io/extmon_slowcon  # A link for the logo.
 sidebar_footer_text: Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
 number_toc_chapters: false         # Whether to add numbers to chapters in your Table of Contents. If true, you can control this at the Chapter level in _data/toc.yml
 

@@ -19,6 +19,10 @@
 - url: /welcome
   title: Welcome to the ExtMon SlowCon
 
-- header: "Extinction Monitor Introduction"
+- header: "Introduction"
 - url: /intro/intro
   title: Basic Introduction to the Extinction Monitor
+
+- header: "System Description"
+- url: /intro/system_desc
+  title: Description of Extinction Monitor System
