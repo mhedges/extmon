@@ -1,4 +1,4 @@
-System Description {#system-description-1}
+System Description 
 ==================
 
 Overview
