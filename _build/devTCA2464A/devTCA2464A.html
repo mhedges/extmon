@@ -1,0 +1,352 @@
+---
+redirect_from:
+  - "/devtca2464a/devtca2464a"
+title: |-
+  EPICS Driver Source Code
+pagenum: 3
+prev_page:
+  url: /system_desc/system_desc.html
+next_page:
+  url: 
+suffix: .md
+search: pvt buf p fd struct addr char include h rbd messages int unsigned message q reg pbi static pbo devsupfun null printf stcaaaccess return n debugon devtcaa bit len ifdef endif strtol flags ic ioctl text dev readtcaa icrdwrioctldata icmsg nmsgs msgs icrdwr d rval xx c inittcaabirecord inittcaaborecord inittcaabo writetcaa after called open ordwr const dpvt udf false birecord borecord inittcaabi init icreadbyte icmrd ierr inp source code test epics driver aug define linux sys report initrecord speciallinconv devbitcaa devbotcaa epicsexportaddress dset cmd icwritebyte val pass s malloc sizeof accessed custom extmon here rendering m jones v support tcaa
+
+comment: "***PROGRAMMATICALLY GENERATED, DO NOT EDIT. SEE ORIGINAL FILES IN /content***"
+---
+
+    <main class="jupyter-page">
+    <div id="page-info"><div id="page-title">EPICS Driver Source Code</div>
+</div>
+    <div class="jb_cell">
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Source-code-test-(custom-ExtMon-EPICS-Driver)">Source code test (custom ExtMon EPICS Driver)<a class="anchor-link" href="#Source-code-test-(custom-ExtMon-EPICS-Driver)"> </a></h1><p>Here is a test of rendering source code (C) of an EPICS driver</p>
+<div class="highlight"><pre><span></span><span class="cm">/* ++</span>
+
+<span class="cm">  devTCA2464a.c</span>
+<span class="cm">  m jones - Aug 29, 2017</span>
+
+<span class="cm">-- */</span>
+
+<span class="k">static</span> <span class="kt">char</span> <span class="n">what</span><span class="p">[]</span> <span class="o">=</span>
+<span class="s">&quot;@(#)devTCA2464A v0.1 support for TCA2464A bus expander, mjones, Aug 2017&quot;</span><span class="p">;</span>
+
+<span class="cp">#define DEBUG_ON</span>
+
+<span class="c1">// #define TCA2464A_ADDR 0x22</span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;linux/i2c.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;linux/i2c-dev.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/ioctl.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#include</span> <span class="cpf">&quot;alarm.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;cvtTable.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;dbDefs.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;dbAccess.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;recGbl.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;recSup.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;devSup.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;biRecord.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;boRecord.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;link.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;epicsExport.h&quot;</span><span class="cp"></span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bi_record</span><span class="p">();</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bi</span><span class="p">();</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bo_record</span><span class="p">();</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bo</span><span class="p">();</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">read_tca2464a</span><span class="p">();</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">write_tca2464a</span><span class="p">();</span>
+
+<span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">reg</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">bit</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+<p>We can even break it up a little bit!</p>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="p">{</span>
+  <span class="kt">long</span> <span class="n">number</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">report</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">init</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">init_record</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">get_ioint_info</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">read_bi</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">special_linconv</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">devBiTCA2464A</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">6</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">init_tca2464a_bi</span><span class="p">,</span> <span class="n">init_tca2464a_bi_record</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">read_tca2464a</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
+
+<span class="k">struct</span> <span class="p">{</span>
+  <span class="kt">long</span> <span class="n">number</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">report</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">init</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">init_record</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">get_ioinit_info</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">write_bo</span><span class="p">;</span>
+  <span class="n">DEVSUPFUN</span> <span class="n">special_linconv</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">devBoTCA2464A</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">6</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">init_tca2464a_bo</span><span class="p">,</span> <span class="n">init_tca2464a_bo_record</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">write_tca2464a</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
+
+<span class="n">epicsExportAddress</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span><span class="n">devBiTCA2464A</span><span class="p">);</span>
+<span class="n">epicsExportAddress</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span><span class="n">devBoTCA2464A</span><span class="p">);</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span> <span class="p">};</span>
+
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="nf">i2c_read_byte</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">addr</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">reg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">i2c_rdwr_ioctl_data</span> <span class="n">rbd</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">i2c_msg</span> <span class="n">messages</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span>
+
+  <span class="n">rbd</span><span class="p">.</span><span class="n">nmsgs</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">rbd</span><span class="p">.</span><span class="n">msgs</span> <span class="o">=</span> <span class="n">messages</span><span class="p">;</span>
+
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">buf</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">reg</span><span class="p">;</span>
+
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">flags</span> <span class="o">=</span> <span class="n">I2C_M_RD</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">buf</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">;</span>
+
+  <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">I2C_RDWR</span><span class="p">,</span><span class="o">&amp;</span><span class="n">rbd</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="n">buf</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">unsigned</span> <span class="kt">short</span> <span class="nf">i2c_read_word</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">addr</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">reg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">i2c_rdwr_ioctl_data</span> <span class="n">rbd</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">i2c_msg</span> <span class="n">messages</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+  <span class="n">rbd</span><span class="p">.</span><span class="n">nmsgs</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">rbd</span><span class="p">.</span><span class="n">msgs</span> <span class="o">=</span> <span class="n">messages</span><span class="p">;</span>
+
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">buf</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">reg</span><span class="p">;</span>
+
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">flags</span> <span class="o">=</span> <span class="n">I2C_M_RD</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">len</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">messages</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">buf</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+
+  <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">I2C_RDWR</span><span class="p">,</span><span class="o">&amp;</span><span class="n">rbd</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="mi">8</span><span class="p">)</span><span class="o">|</span><span class="n">buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">i2c_read_buf</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">addr</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="kt">int</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">i2c_rdwr_ioctl_data</span> <span class="n">rbd</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">i2c_msg</span> <span class="n">message</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">ierr</span><span class="p">;</span>
+
+  <span class="n">rbd</span><span class="p">.</span><span class="n">nmsgs</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">rbd</span><span class="p">.</span><span class="n">msgs</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">message</span><span class="p">;</span>
+
+  <span class="n">message</span><span class="p">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">I2C_M_RD</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">len</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+
+  <span class="n">ierr</span> <span class="o">=</span> <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">I2C_RDWR</span><span class="p">,</span><span class="o">&amp;</span><span class="n">rbd</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">ierr</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">i2c_write_cmd</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">addr</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">cmd</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">i2c_rdwr_ioctl_data</span> <span class="n">rbd</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">i2c_msg</span> <span class="n">message</span><span class="p">;</span>
+
+  <span class="n">rbd</span><span class="p">.</span><span class="n">nmsgs</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">rbd</span><span class="p">.</span><span class="n">msgs</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">message</span><span class="p">;</span>
+
+  <span class="n">message</span><span class="p">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">buf</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">cmd</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">I2C_RDWR</span><span class="p">,</span><span class="o">&amp;</span><span class="n">rbd</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">i2c_write_byte</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">addr</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">reg</span><span class="p">,</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">i2c_rdwr_ioctl_data</span> <span class="n">rbd</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">i2c_msg</span> <span class="n">message</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+  <span class="n">rbd</span><span class="p">.</span><span class="n">nmsgs</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">rbd</span><span class="p">.</span><span class="n">msgs</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">message</span><span class="p">;</span>
+
+  <span class="n">message</span><span class="p">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">message</span><span class="p">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+  <span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">reg</span><span class="p">;</span>
+  <span class="n">buf</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">I2C_RDWR</span><span class="p">,</span><span class="o">&amp;</span><span class="n">rbd</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bi</span><span class="p">(</span><span class="kt">int</span> <span class="n">after</span><span class="p">)</span> <span class="p">{</span>
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A (init) called, pass=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">after</span><span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">,</span><span class="n">O_RDWR</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/i2c-2&quot;</span><span class="p">,</span><span class="n">O_RDWR</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bi_record</span><span class="p">(</span><span class="k">struct</span> <span class="n">biRecord</span> <span class="o">*</span><span class="n">pbi</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="n">pvt</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">q</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:init_tca2464a_bi_record(%p) called</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">pbi</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;  pbi-&gt;inp.text = %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">inp</span><span class="p">.</span><span class="n">text</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">pvt</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span><span class="p">));</span>
+  <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">dpvt</span> <span class="o">=</span> <span class="n">pvt</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+  <span class="n">p</span> <span class="o">=</span> <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">inp</span><span class="p">.</span><span class="n">text</span><span class="p">;</span>
+  <span class="n">i</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="p">)</span> <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">udf</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bo</span><span class="p">(</span><span class="kt">int</span> <span class="n">after</span><span class="p">)</span> <span class="p">{</span>
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:init_tca2464a_bo() called, pass=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">after</span><span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/i2c-1&quot;</span><span class="p">,</span><span class="n">O_RDWR</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/i2c-2&quot;</span><span class="p">,</span><span class="n">O_RDWR</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">init_tca2464a_bo_record</span><span class="p">(</span><span class="k">struct</span> <span class="n">boRecord</span> <span class="o">*</span><span class="n">pbo</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="n">pvt</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">q</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:init_tca2464a_bo_record(%p) called</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">pbo</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;  pbo-&gt;out.text = %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">out</span><span class="p">.</span><span class="n">text</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">pvt</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span><span class="p">));</span>
+  <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">dpvt</span> <span class="o">=</span> <span class="n">pvt</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+  <span class="n">p</span> <span class="o">=</span> <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">out</span><span class="p">.</span><span class="n">text</span><span class="p">;</span>
+  <span class="n">i</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="p">)</span> <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="o">&amp;</span><span class="n">q</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">udf</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">read_tca2464a</span><span class="p">(</span><span class="k">struct</span> <span class="n">biRecord</span> <span class="o">*</span><span class="n">pbi</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="n">pvt</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span>
+
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:read_tca2464a(%p) accessed</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">pbi</span><span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">udf</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+
+  <span class="n">pvt</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="p">)</span><span class="n">pbi</span><span class="o">-&gt;</span><span class="n">dpvt</span><span class="p">;</span>
+  <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">rval</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">buf</span> <span class="o">=</span> <span class="n">i2c_read_byte</span><span class="p">(</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">buf</span><span class="o">&amp;</span><span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span><span class="p">))</span> <span class="p">)</span> <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">rval</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:read_tca2464a(%p) 0x%02x.%d = 0x%02x --&gt; %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">pbi</span><span class="p">,</span> <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span><span class="p">,</span> <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">pbi</span><span class="o">-&gt;</span><span class="n">rval</span><span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">long</span> <span class="nf">write_tca2464a</span><span class="p">(</span><span class="k">struct</span> <span class="n">boRecord</span> <span class="o">*</span><span class="n">pbo</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="n">pvt</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span>
+
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;devTCA2464A:write_tca2464a(%p) accessed</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">pbo</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;   oval = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">rval</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">udf</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+  <span class="n">pvt</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_tca2464a_access</span> <span class="o">*</span><span class="p">)</span><span class="n">pbo</span><span class="o">-&gt;</span><span class="n">dpvt</span><span class="p">;</span>
+  <span class="n">buf</span> <span class="o">=</span> <span class="n">i2c_read_byte</span><span class="p">(</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span><span class="p">);</span>
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;  reg 0x%02x = 0x%02x --&gt; &quot;</span><span class="p">,</span> <span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span><span class="p">,</span> <span class="n">buf</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">buf</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">pbo</span><span class="o">-&gt;</span><span class="n">rval</span> <span class="p">)</span> <span class="n">buf</span> <span class="o">|=</span> <span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">bit</span><span class="p">);</span>
+<span class="cp">#ifdef DEBUG_ON</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;0x%02x</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">buf</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+  <span class="n">i2c_write_byte</span><span class="p">(</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">addr</span><span class="p">,</span><span class="n">pvt</span><span class="o">-&gt;</span><span class="n">reg</span><span class="p">,</span><span class="n">buf</span><span class="p">);</span>
+
+  <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+</div>
+
+ 
+
+
+    </main>
+    
